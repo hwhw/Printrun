@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 #Interactive RepRap e axis calibration program
 #(C) Nathan Zadoks 2011
 #Licensed under CC-BY-SA or GPLv2 and higher - Pick your poison.

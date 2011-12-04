@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 from skeinforge.fabmetheus_utilities import archive
 from skeinforge.fabmetheus_utilities import settings

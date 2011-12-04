@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 import os
 import wx,math,stltool
 from wx import glcanvas
