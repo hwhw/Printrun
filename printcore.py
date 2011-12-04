@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 from serial import Serial
 from threading import Thread
 from select import error as SelectError
