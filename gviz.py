@@ -1,12 +1,12 @@
 import wx,time
 
+    
+
 class window(wx.Frame):
     def __init__(self,f,size=(600,600),bedsize=(200,200),grid=(10,50),extrusion_width=0.5):
-        wx.Frame.__init__(self,None,title="Layer view (Use shift+mousewheel to switch layers)",size=(size[0],size[1]))
+        wx.Frame.__init__(self,None,title="Gcode view, shift to move view, mousewheel to set layer",size=(size[0],size[1]))
         self.p=gviz(self,size=size,bedsize=bedsize,grid=grid,extrusion_width=extrusion_width)
         s=time.time()
-        for i in f:
-            self.p.addgcode(i)
         #print time.time()-s
         self.initpos=[0,0]
         self.p.Bind(wx.EVT_KEY_DOWN,self.key)
@@ -15,7 +15,7 @@ class window(wx.Frame):
         self.Bind(wx.EVT_MOUSEWHEEL,self.zoom)
         self.p.Bind(wx.EVT_MOUSE_EVENTS,self.mouse)
         self.Bind(wx.EVT_MOUSE_EVENTS,self.mouse)
-        
+    
     def mouse(self,event):
         if event.ButtonUp(wx.MOUSE_BTN_LEFT):
             if(self.initpos is not None):
@@ -61,7 +61,7 @@ class gviz(wx.Panel):
         self.lastpos=[0,0,0,0,0,0,0]
         self.hilightpos=self.lastpos[:]
         self.Bind(wx.EVT_PAINT,self.paint)
-        self.Bind(wx.EVT_SIZE,lambda *e:(wx.CallAfter(self.repaint),wx.CallAfter(self.Refresh)))
+        self.Bind(wx.EVT_SIZE,self.resize)
         self.lines={}
         self.pens={}
         self.arcs={}
@@ -69,7 +69,8 @@ class gviz(wx.Panel):
         self.layers=[]
         self.layerindex=0
         self.filament_width=extrusion_width # set it to 0 to disable scaling lines with zoom
-        self.scale=[min(float(size[0])/bedsize[0],float(size[1])/bedsize[1])]*2
+        self.basescale=[min(float(size[0])/bedsize[0],float(size[1])/bedsize[1])]*2
+        self.scale=self.basescale
         penwidth = max(1.0,self.filament_width*((self.scale[0]+self.scale[1])/2.0))
         self.translate=[0.0,0.0]
         self.mainpen=wx.Pen(wx.Colour(0,0,0),penwidth)
@@ -88,7 +89,11 @@ class gviz(wx.Panel):
         self.lastpos=[0,0,0,0,0,0,0]
         self.lines={}
         self.pens={}
+        self.arcs={}
+        self.arcpens={}
         self.layers=[]
+        self.hilight=[]
+        self.hilightarcs=[]
         self.layerindex=0
         self.showall=0
         self.dirty=1
@@ -114,9 +119,16 @@ class gviz(wx.Panel):
         except:
             pass
     
+    def resize(self,event):
+        size=self.GetClientSize()
+        newsize=min(float(size[0])/self.size[0],float(size[1])/self.size[1])
+        self.size=self.GetClientSize()
+        wx.CallAfter(self.zoom,0,0,newsize)
+        
 
     def zoom(self,x,y,factor):
         self.scale = [s * factor for s in self.scale]
+        
         self.translate = [ x - (x-self.translate[0]) * factor,
                             y - (y-self.translate[1]) * factor]
         penwidth = max(1.0,self.filament_width*((self.scale[0]+self.scale[1])/2.0))
@@ -125,6 +137,7 @@ class gviz(wx.Panel):
         #self.dirty=1
         self.repaint()
         self.Refresh()
+        
         
     def repaint(self):
         self.blitmap=wx.EmptyBitmap(self.GetClientSize()[0],self.GetClientSize()[1],-1)
@@ -199,6 +212,11 @@ class gviz(wx.Panel):
         sz=self.GetClientSize()
         dc.DrawBitmap(self.blitmap,0,0)
         del dc
+        
+    def addfile(self,gcodes=[]):
+        self.clear()
+        for i in gcodes:
+            self.addgcode(i)
         
     def addgcode(self,gcode="M105",hilight=0):
         gcode=gcode.split("*")[0]
